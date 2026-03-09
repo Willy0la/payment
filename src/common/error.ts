@@ -15,6 +15,6 @@ export const AppErrors = {
   INTERNAL_SERVER: (msg?: string) =>
     new InternalServerErrorException(msg || 'Internal Server Error'),
   NOT_FOUND: (msg?: string) => {
-    new NotFoundException(msg || 'User not found');
+    return new NotFoundException(msg || 'User not found');
   },
 };

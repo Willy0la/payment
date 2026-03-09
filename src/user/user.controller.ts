@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Delete, Req, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { Request } from 'express';
 import { AuthGuard } from '@nestjs/passport';
@@ -22,5 +22,13 @@ export class UserController {
   async getProfile(@Req() req: AuthRequest) {
     const userId = req.user.id;
     return await this.user.findUserById(userId);
+  }
+
+  @Delete('account')
+  @UseGuards(AuthGuard('jwt'))
+  async deleteAccount(@Req() req: AuthRequest) {
+    const userId = req.user.id;
+    await this.user.softDeleteUser(userId);
+    return { message: 'Account successfully deleted' };
   }
 }

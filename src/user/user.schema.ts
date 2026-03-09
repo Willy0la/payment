@@ -25,6 +25,9 @@ export class UserModel extends Document {
 
   @Prop({ type: Date, default: null, required: false })
   loginLockedUntil: Date | null;
+
+  @Prop({ type: Date, default: null })
+  deletedAt: Date | null;
 }
 
 export const UserSchema = SchemaFactory.createForClass(UserModel);

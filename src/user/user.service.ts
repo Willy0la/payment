@@ -12,8 +12,12 @@ export class UserService {
   async findUserById(id: string) {
     const user = await this.baseRepo.findUserById(id);
     if (!user) {
-      throw new AppErrors.NOT_FOUND('User not found');
+      throw AppErrors.NOT_FOUND('User not found');
     }
     return userSanitizer(user);
+  }
+
+  async softDeleteUser(userId: string) {
+    return this.baseRepo.softDeleteUser(userId);
   }
 }

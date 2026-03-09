@@ -7,6 +7,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
 import { Currency, Status } from 'src/wallet/wallet.enum';
 import { WalletModel } from 'src/wallet/wallet.schema';
+import { TransactionModel } from 'src/transaction/transaction.schema';
+import { IdempotencyModel } from 'src/transaction/idempotency.schema';
 
 @Injectable()
 export class BaseService {
@@ -16,6 +18,10 @@ export class BaseService {
     @InjectModel(UserModel.name) private readonly userModel: Model<UserModel>,
     @InjectModel(WalletModel.name)
     private readonly walletModel: Model<WalletModel>,
+    @InjectModel(TransactionModel.name)
+    private readonly transactionModel: Model<TransactionModel>,
+    @InjectModel(IdempotencyModel.name)
+    private readonly idempotencyModel: Model<IdempotencyModel>,
   ) {
     this.logger.log('BaseService initialized');
   }
@@ -110,7 +116,7 @@ export class BaseService {
       user.loginLockedUntil = lockUntil;
 
       this.logger.warn(
-        `User ${user.userName} locked (retries: ${user.loginRetryCount}) until ${lockUntil}`,
+        `User account  locked (retries: ${user.loginRetryCount}) `,
       );
     }
 
@@ -141,6 +147,36 @@ export class BaseService {
     return this.walletModel
       .findOne({ userId, currency })
       .session(session || null);
+  }
+
+  async softDeleteUser(userId: string) {
+    const session = await this.userModel.db.startSession();
+    session.startTransaction();
+    try {
+      const user = await this.userModel.findByIdAndUpdate(
+        userId,
+        { deletedAt: new Date(), isActive: false },
+        { new: true, session },
+      );
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      await this.walletModel.updateMany(
+        { userId: user._id },
+        { status: Status.CLOSED },
+        { session },
+      );
+
+      await session.commitTransaction();
+      return true;
+    } catch (err) {
+      await session.abortTransaction();
+      throw err;
+    } finally {
+      session.endSession();
+    }
   }
 
   async findUserByAccountNumber(
@@ -183,5 +219,28 @@ export class BaseService {
       },
       { new: true, session },
     );
+  }
+
+  async createTransaction(
+    data: Partial<TransactionModel>,
+    session: mongoose.ClientSession,
+  ) {
+    return await this.transactionModel.create([data], { session });
+  }
+
+  async findIdempotencyKey(key: string, session?: mongoose.ClientSession) {
+    return this.idempotencyModel.findOne({ key }).session(session || null);
+  }
+
+  async createIdempotencyKey(
+    data: {
+      key: string;
+      transactionID: string;
+      status: string;
+      previousResponse?: any;
+    },
+    session: mongoose.ClientSession,
+  ) {
+    return await this.idempotencyModel.create([data], { session });
   }
 }

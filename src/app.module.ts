@@ -5,10 +5,11 @@ import { UserModule } from './user/user.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigService, ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
-import { ControllerModule } from './controller/controller.module';
+
 import { BaseService } from './base/base.service';
 import { WalletModule } from './wallet/wallet.module';
 import { BaseModule } from './base/base.module';
+import { TransactionModule } from './transaction/transaction.module';
 import * as Joi from 'joi';
 @Module({
   imports: [
@@ -42,9 +43,9 @@ import * as Joi from 'joi';
     }),
     UserModule,
     AuthModule,
-    ControllerModule,
     WalletModule,
     BaseModule,
+    TransactionModule,
   ],
   controllers: [AppController],
   providers: [AppService, BaseService],

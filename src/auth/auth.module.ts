@@ -30,8 +30,8 @@ import { JwtStrategy } from 'src/guard/strategy';
     ]),
   ],
 
-  providers: [AuthService, BaseService,JwtStrategy],
+  providers: [AuthService, BaseService, JwtStrategy],
   controllers: [AuthController],
-  exports: [JwtModule, PassportModule, AuthService, BaseService,JwtStrategy],
+  exports: [JwtModule, PassportModule, AuthService, BaseService, JwtStrategy],
 })
 export class AuthModule {}

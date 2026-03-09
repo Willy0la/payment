@@ -1,13 +1,21 @@
 import { Document, Types } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Currency, Status } from './wallet.enum';
+import { UserModel } from 'src/user/user.schema';
 
 @Schema({
   collection: 'userWallet',
   timestamps: true,
+  toJSON: { getters: true },
+  toObject: { getters: true },
 })
 export class WalletModel extends Document {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: UserModel.name,
+    required: true,
+    index: true,
+  })
   userId: Types.ObjectId;
 
   @Prop({
@@ -21,13 +29,6 @@ export class WalletModel extends Document {
   })
   currency: Currency;
 
-  @Prop({
-    type: Number,
-    default: 0,
-    set: (v: number) => Math.round(v * 100),
-    get: (v: number) => v / 100,
-  })
-  lockedBalance: number;
   @Prop({
     type: Number,
     default: 0,
