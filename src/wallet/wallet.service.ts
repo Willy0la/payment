@@ -116,16 +116,28 @@ export class WalletService {
 
   async deposit(userId: string, dto: DepositDto): Promise<DepositResponse> {
     const { amount } = dto;
+    const session = await this.connection.startSession();
 
-    const updatedWallet = await this.baseService.incrementWalletBalance(
-      userId,
-      amount,
-    );
+    try {
+      let result: DepositResponse;
 
-    if (!updatedWallet) {
-      throw new Error('Wallet not found');
+      await session.withTransaction(async () => {
+        const updatedWallet = await this.baseService.incrementWalletBalance(
+          userId,
+          amount,
+          session,
+        );
+
+        if (!updatedWallet) {
+          throw AppErrors.NOT_FOUND('Wallet not found');
+        }
+
+        result = depositSanitizer(updatedWallet);
+      });
+
+      return result!;
+    } finally {
+      await session.endSession();
     }
-
-    return depositSanitizer(updatedWallet);
   }
 }

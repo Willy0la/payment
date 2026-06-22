@@ -1,98 +1,163 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Payment Service API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A production-grade payment backend built with NestJS and MongoDB. Supports user authentication, wallet management, and peer-to-peer money transfers with atomic transactions and idempotency protection.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## Features
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **JWT Authentication** — signup, signin, bcrypt password hashing, 6-digit transaction PIN
+- **Account lockout** — account temporarily locked after 5 failed login attempts (15-minute lock, auto-cleared on expiry)
+- **Wallet system** — NGN wallet auto-created on signup, deposit and transfer endpoints
+- **Atomic transfers** — debit and credit wrapped in MongoDB sessions; both succeed or both fail
+- **Idempotency keys** — prevents duplicate transfers on network retry, keys expire after 24 hours
+- **Soft delete** — user accounts and wallets deactivated without permanent data loss
+- **Response sanitization** — sensitive fields (password, PIN) never returned in API responses
 
-## Project setup
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | NestJS |
+| Database | MongoDB (Mongoose) |
+| Authentication | Passport.js, JWT |
+| Validation | class-validator, class-transformer |
+| Config | @nestjs/config, Joi |
+| Unique IDs | uuid |
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js v18+
+- MongoDB instance (local or Atlas)
+
+### Installation
 
 ```bash
-$ npm install
+git clone https://github.com/Willy0la/payment.git
+cd payment
+npm install
 ```
 
-## Compile and run the project
+### Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+MONGO_URI=mongodb://localhost:27017/payment
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=7d
+PORT=3000
+```
+
+### Running the App
 
 ```bash
 # development
-$ npm run start
+npm run start:dev
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+# production
+npm run start:prod
 ```
 
-## Run tests
+---
 
-```bash
-# unit tests
-$ npm run test
+## API Endpoints
 
-# e2e tests
-$ npm run test:e2e
+### Auth
 
-# test coverage
-$ npm run test:cov
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| POST | `/auth/signup` | Register a new user | None |
+| POST | `/auth/signin` | Login with email/username + password or PIN | None |
+
+**Signup body:**
+```json
+{
+  "name": "John Doe",
+  "userName": "johndoe",
+  "email": "john@example.com",
+  "password": "securepassword",
+  "transactionPin": "123456",
+  "phoneNumber": "+2348012345678"
+}
 ```
 
-## Deployment
+> Account number is derived automatically from the last 10 digits of the phone number.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+**Signin body:**
+```json
+{
+  "identifier": "johndoe",
+  "password": "securepassword"
+}
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+> Provide either `password` or `transactionPin`, not both.
 
-## Resources
+---
 
-Check out a few resources that may come in handy when working with NestJS:
+### Wallet
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+All wallet endpoints require a Bearer token from signin.
 
-## Support
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| POST | `/wallet/deposit` | Add funds to wallet | Required |
+| POST | `/wallet/send-money` | Transfer funds to another user | Required |
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+**Deposit body:**
+```json
+{
+  "amount": 5000
+}
+```
 
-## Stay in touch
+**Send money body:**
+```json
+{
+  "receiverAccountNumber": "8012345678",
+  "amount": 1000,
+  "reference": "Payment for services",
+  "idempotencyKey": "unique-request-id-123"
+}
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+> `idempotencyKey` is optional but recommended. If a transfer request is retried with the same key, the original response is returned without processing a duplicate transaction.
 
-## License
+---
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Transactions
+
+| Method | Endpoint | Description | Auth |
+|---|---|---|---|
+| GET | `/transaction/history` | Get user's transaction history | Required |
+| GET | `/transaction/:id` | Get transaction by ID | Required |
+
+---
+
+## Key Design Decisions
+
+**Atomic transfers with MongoDB sessions**
+The `sendMoney` flow uses `session.withTransaction()` to ensure the sender debit and receiver credit are atomic. If either operation fails, the entire transaction rolls back.
+
+**Race-condition-safe balance check**
+Rather than reading the balance first and checking in application code, the decrement query uses `{ balance: { $gte: amount } }` as a condition. The update only applies if the balance is sufficient — no separate read that could race under concurrent requests.
+
+**Idempotency**
+Each transfer can include an `idempotencyKey`. Before processing, the service checks if this key has been used. If the previous request succeeded, the original response is returned immediately. If it's in a failed state, a `400` is thrown. Keys expire after 24 hours via a MongoDB TTL index.
+
+---
+
+## Planned Improvements
+
+- [ ] BullMQ queue for async transaction processing and reversals
+- [ ] Redis caching for transaction history and wallet balance reads
+- [ ] Optimistic concurrency (version field) for high-concurrency environments
+- [ ] Swagger / OpenAPI documentation
+- [ ] Comprehensive E2E test suite

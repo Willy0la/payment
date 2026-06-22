@@ -1,28 +1,18 @@
 import {
-  BadRequestException,
   Body,
   Controller,
-  Param,
   Post,
   UnauthorizedException,
   UseGuards,
-  UseInterceptors,
+  Req,
 } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { SendMoneyDto, DepositDto } from './wallet.dto';
-import { Req } from '@nestjs/common';
 import { Request } from 'express';
 import { AuthGuard } from '@nestjs/passport';
-import { JwtStrategy } from 'src/guard/strategy';
 
 interface AuthRequest extends Request {
-  user: { userId: string };
-}
-
-interface JwtPayload {
-  sub: string;
-  iat: number;
-  exp: number;
+  user: { _id: string };
 }
 
 @Controller('wallet')
@@ -31,22 +21,20 @@ export class WalletController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post('send-money')
-  async sendMoney(@Body() dto: SendMoneyDto, @Req() req: any) {
-    if (!req.user) {
+  async sendMoney(@Body() dto: SendMoneyDto, @Req() req: AuthRequest) {
+    const userId = req.user?._id?.toString();
+    if (!userId) {
       throw new UnauthorizedException('User not authenticated');
     }
-
-    const userId = req.user._id.toString();
-
     return this.walletService.sendMoney(userId, dto);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Post('deposit')
-  async deposit(@Body() dto: DepositDto, @Req() req: any) {
+  async deposit(@Body() dto: DepositDto, @Req() req: AuthRequest) {
     const userId = req.user?._id?.toString();
     if (!userId) {
-      throw new BadRequestException('User not authenticated');
+      throw new UnauthorizedException('User not authenticated');
     }
     return this.walletService.deposit(userId, dto);
   }

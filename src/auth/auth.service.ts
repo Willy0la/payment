@@ -32,7 +32,7 @@ export class AuthService {
       const existingUser = await this.baseRepo.findOneUser(userName, email);
       if (existingUser) {
         throw AppErrors.CONFLICTED_RESOURCES(
-          'User with username :${userName} already exists',
+          `User with username :${userName} already exists`,
         );
       }
 
