@@ -13,7 +13,7 @@ export class UserModel extends Document {
   password: string;
   @Prop({ type: String, required: true, unique: true })
   phoneNumber: string;
-  @Prop({ type: String, required: true, unique: true, index: true })
+  @Prop({ type: String, required: true, unique: true })
   accountNumber: string;
   @Prop({ type: Boolean, default: true })
   isActive: boolean;
@@ -23,7 +23,7 @@ export class UserModel extends Document {
   @Prop({ type: Number, default: 0 })
   loginRetryCount: number;
 
-  @Prop({ type: Date, default: null, required: false })
+  @Prop({ type: Date, default: null })
   loginLockedUntil: Date | null;
 
   @Prop({ type: Date, default: null })
@@ -31,3 +31,11 @@ export class UserModel extends Document {
 }
 
 export const UserSchema = SchemaFactory.createForClass(UserModel);
+
+UserSchema.pre('save', async function () {
+  if (this.deletedAt !== null) {
+    this.isActive = false;
+  } else {
+    this.isActive = true;
+  }
+});

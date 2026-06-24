@@ -5,7 +5,6 @@ import {
   IsString,
   IsNumberString,
   Length,
-  Matches,
 } from 'class-validator';
 
 export class SignUpDto {
@@ -18,20 +17,18 @@ export class SignUpDto {
 
   @IsNotEmpty({ message: 'Email cannot be empty' })
   @IsEmail({}, { message: 'Please enter a valid email address' })
-  @Matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/, {
-    message: 'Email format is invalid or contains restricted characters',
-  })
   email: string;
 
   @IsNotEmpty()
   @IsString()
   password: string;
-  @IsNotEmpty()
+
+  @IsNotEmpty({ message: 'Transaction PIN cannot be empty' })
   @IsNumberString({}, { message: 'PIN must be numeric' })
   @Length(6, 6, { message: 'PIN must be exactly 6 digits' })
   transactionPin: string;
 
-  @IsNotEmpty({ message: 'User Name cannot be empty' })
+  @IsNotEmpty({ message: 'Phone number cannot be empty' })
   @IsPhoneNumber('NG')
   phoneNumber: string;
 }

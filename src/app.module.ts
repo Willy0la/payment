@@ -5,8 +5,6 @@ import { UserModule } from './user/user.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigService, ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
-
-import { BaseService } from './base/base.service';
 import { WalletModule } from './wallet/wallet.module';
 import { BaseModule } from './base/base.module';
 import { TransactionModule } from './transaction/transaction.module';
@@ -21,14 +19,16 @@ import * as Joi from 'joi';
         '.env.production',
       ],
       validationSchema: Joi.object({
-        NODE_ENV: Joi.string().valid(),
-        DB: Joi.string().valid(),
-        PORT: Joi.number().valid(),
-        TTL: Joi.number().valid(),
-        SECRET: Joi.string().valid(),
+        NODE_ENV: Joi.string()
+          .valid('development', 'staging', 'production')
+          .default('development'),
+        DB: Joi.string().required(),
+        PORT: Joi.number().default(3300),
+        TTL: Joi.number().required(),
+        SECRET: Joi.string().required(),
       }),
       validationOptions: {
-        abortEarly: true,
+        abortEarly: false,
         allUnknown: true,
       },
     }),
@@ -48,6 +48,6 @@ import * as Joi from 'joi';
     TransactionModule,
   ],
   controllers: [AppController],
-  providers: [AppService, BaseService],
+  providers: [AppService],
 })
 export class AppModule {}

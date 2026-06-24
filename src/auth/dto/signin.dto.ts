@@ -1,9 +1,11 @@
 import { IsString, ValidateIf, IsNotEmpty } from 'class-validator';
-
+import { AtLeastOneOf } from 'src/common/validator/customDecorator';
 export class LoginDto {
-  @IsNotEmpty({ message: 'User Name cannot be empty' })
-  @IsString({ message: 'User Name must be a string' })
+  @IsNotEmpty({ message: 'Identifier cannot be empty' })
+  @IsString({ message: 'Identifier must be a string' })
   identifier: string;
+
+  @AtLeastOneOf('password', 'transactionPin')
   @ValidateIf((o) => o.password !== undefined)
   @IsString({ message: 'Password must be a string' })
   password?: string;
